@@ -1,0 +1,62 @@
+import { useState } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"; import { Textarea } from "@/components/ui/textarea"; import { format } from "date-fns"; import { BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+
+const servicios = ["Botox", "Ácido hialurónico", "PRN", "Sculptra"];
+
+export default function TurnosApp() { const [turnos, setTurnos] = useState([]); const [nuevoTurno, setNuevoTurno] = useState({ nombre: "", fecha: "", hora: "", servicio: servicios[0], estado: "pendiente" });
+
+const agregarTurno = () => { setTurnos([...turnos, nuevoTurno]); setNuevoTurno({ nombre: "", fecha: "", hora: "", servicio: servicios[0], estado: "pendiente" }); };
+
+const enviarWhatsapp = (turno) => { const mensaje = Hola ${turno.nombre}, te recuerdo tu turno para el día ${turno.fecha} a las ${turno.hora} por ${turno.servicio}.; const url = https://wa.me/?text=${encodeURIComponent(mensaje)}; window.open(url, "_blank"); };
+
+const estadisticas = servicios.map((serv) => ({ servicio: serv, cantidad: turnos.filter(t => t.servicio === serv).length }));
+
+const ingresosEstimados = turnos.length * 10000; // estimativo general
+
+return ( <div className="p-4 max-w-xl mx-auto space-y-6"> <h1 className="text-2xl font-bold">Gestión de Turnos</h1>
+
+<Card>
+    <CardContent className="space-y-2 p-4">
+      <Input placeholder="Nombre del cliente" value={nuevoTurno.nombre} onChange={e => setNuevoTurno({ ...nuevoTurno, nombre: e.target.value })} />
+      <Input type="date" value={nuevoTurno.fecha} onChange={e => setNuevoTurno({ ...nuevoTurno, fecha: e.target.value })} />
+      <Input type="time" value={nuevoTurno.hora} onChange={e => setNuevoTurno({ ...nuevoTurno, hora: e.target.value })} />
+
+      <Select value={nuevoTurno.servicio} onValueChange={(val) => setNuevoTurno({ ...nuevoTurno, servicio: val })}>
+        <SelectTrigger>
+          <SelectValue placeholder="Servicio" />
+        </SelectTrigger>
+        <SelectContent>
+          {servicios.map(serv => <SelectItem key={serv} value={serv}>{serv}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Button onClick={agregarTurno}>Agregar turno</Button>
+    </CardContent>
+  </Card>
+
+  <div className="space-y-2">
+    <h2 className="text-xl font-semibold">Próximos Turnos</h2>
+    {turnos.sort((a, b) => new Date(`${a.fecha} ${a.hora}`) - new Date(`${b.fecha} ${b.hora}`)).map((turno, i) => (
+      <Card key={i} className="border-l-4 border-blue-500">
+        <CardContent className="p-3 space-y-1">
+          <div className="font-semibold">{turno.nombre} - {turno.servicio}</div>
+          <div>{format(new Date(`${turno.fecha}T${turno.hora}`), 'dd/MM/yyyy HH:mm')}</div>
+          <Button onClick={() => enviarWhatsapp(turno)} size="sm" className="mt-2">Enviar WhatsApp</Button>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+
+  <div className="mt-4">
+    <h2 className="text-xl font-semibold">Estadísticas</h2>
+    <div className="text-sm mt-1">Ingresos estimados: ${ingresosEstimados.toLocaleString()}</div>
+    <BarChart width={320} height={200} data={estadisticas} className="mt-2">
+      <XAxis dataKey="servicio" />
+      <YAxis />
+      <Tooltip />
+      <Bar dataKey="cantidad" fill="#3b82f6" />
+    </BarChart>
+  </div>
+</div>
+
+); }
+
